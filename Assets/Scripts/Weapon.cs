@@ -5,16 +5,23 @@ using UnityEngine.UI;
 
 public class Weapon:MonoBehaviour {
     [SerializeField] Camera playerCamera;
+    [SerializeField] ParticleSystem muzzleSmoke;
+    [SerializeField] ParticleSystem muzzleSparks;
+    [SerializeField] GameObject flashlight;
+
     [SerializeField] Text ammoAmountText;
     [SerializeField] Text killAmountText;
+
     [SerializeField] int maxAmmoAmount;
     [SerializeField] float weaponRange;
     [SerializeField] float weaponDamage;
     [SerializeField] float weaponFireDelay;
     [SerializeField] float weaponReloadTime;
+
     [SerializeField] AudioClip gunshotClip;
     [SerializeField] AudioClip magEmptyClip;
     [SerializeField] AudioClip magReloadClip;
+    [SerializeField] AudioClip flashlightClip;
 
     private AudioSource audioSource;
     private float nextFireTime = 0f;
@@ -39,26 +46,31 @@ public class Weapon:MonoBehaviour {
         }
         if(Input.GetMouseButtonDown(0)) {
             // if mag empty, play magEmptyClip
-            if(ammoAmount == 0) {
+            if(ammoAmount == 0 && canInteractWithWeapon) {
                 audioSource.PlayOneShot(magEmptyClip);
             }
         }
         if(Input.GetKeyDown(KeyCode.R)) {
             TryReloadWeapon();
         }
+        if(Input.GetMouseButtonDown(1)) {
+            // toggle flashlight
+            flashlight.SetActive(!flashlight.activeSelf);
+            audioSource.PlayOneShot(flashlightClip);
+        }
     }
 
     private void TryReloadWeapon() {
         if(canInteractWithWeapon) {
             // reload
-            ammoAmount = maxAmmoAmount;
             audioSource.PlayOneShot(magReloadClip);
             canInteractWithWeapon = false;
-            Invoke("EnableFiring", weaponReloadTime);
+            Invoke("ReloadAmmoCount", weaponReloadTime);
         }
     }
 
-    private void EnableFiring() {
+    private void ReloadAmmoCount() {
+        ammoAmount = maxAmmoAmount;
         canInteractWithWeapon = true;
     }
 
@@ -70,10 +82,10 @@ public class Weapon:MonoBehaviour {
     private void TryFireWeapon() {
         if(canInteractWithWeapon && Time.time > nextFireTime) {
             if(ammoAmount > 0) {
-                // can fire
+                // fire
                 ammoAmount -= 1;
                 CheckTargetHits();
-                audioSource.PlayOneShot(gunshotClip);
+                WeaponFX();
             } else {
                 if(ammoAmount == 0 && !magEmptied) {
                     // audio notification of empty mag
@@ -85,11 +97,17 @@ public class Weapon:MonoBehaviour {
         }
     }
 
+    private void WeaponFX() {
+        audioSource.PlayOneShot(gunshotClip);
+        muzzleSparks.Play();
+        muzzleSmoke.Play();
+    }
+
     private void CheckTargetHits() {
         RaycastHit hit;
-        if(Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, weaponRange) && hit.transform.name == "Enemy") {
+        if(Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, weaponRange) && hit.transform.gameObject.CompareTag("Enemy")) {
             // enemy object hit, deal damage
-            hit.transform.GetComponent<EnemyHealth>().TakeDamage(weaponDamage);
+            hit.transform.GetComponent<EnemyHealth>().TakeDamage(hit.point, weaponDamage);
         }
     }
 }
