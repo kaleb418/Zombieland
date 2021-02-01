@@ -34,25 +34,25 @@ public class EnemyAI:MonoBehaviour {
         distanceToTarget = Vector3.Distance(transform.position, target.position);
 
         if(distanceToTarget <= chaseRange) {
-            // Start heading towards target
-            zomboiEngaged = true;
-            navMeshAgent.SetDestination(target.position);
-            if(!zomboiEngaged) {
-                audioSource.PlayOneShot(awakenClip);
-                zomboiEngaged = true;
-            }
+            // target in range
+            ChaseTarget();
         }
 
         if(distanceToTarget <= navMeshAgent.stoppingDistance && Time.time > nextAttackTime) {
-            // Attack target
-            // TODO Add attack mechanics
+            // attack target
+            // TODO add attack mechanics
             audioSource.PlayOneShot(attackClip);
             nextAttackTime = Time.time + attackDelay;
         }
     }
 
-    private void OnDrawGizmosSelected() {
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(transform.position, chaseRange);
+    private void ChaseTarget() {
+        GetComponent<Animator>().SetTrigger("Move");
+        zomboiEngaged = true;
+        navMeshAgent.SetDestination(target.position);
+        if(!zomboiEngaged) {
+            audioSource.PlayOneShot(awakenClip);
+            zomboiEngaged = true;
+        }
     }
 }

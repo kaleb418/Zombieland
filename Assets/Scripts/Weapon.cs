@@ -82,10 +82,7 @@ public class Weapon:MonoBehaviour {
     private void TryFireWeapon() {
         if(canInteractWithWeapon && Time.time > nextFireTime) {
             if(ammoAmount > 0) {
-                // fire
-                ammoAmount -= 1;
-                CheckTargetHits();
-                WeaponFX();
+                FireWeapon();
             } else {
                 if(ammoAmount == 0 && !magEmptied) {
                     // audio notification of empty mag
@@ -95,6 +92,13 @@ public class Weapon:MonoBehaviour {
             }
             nextFireTime = Time.time + weaponFireDelay;
         }
+    }
+
+    private void FireWeapon() {
+        GetComponent<Animator>().SetTrigger("Fire");
+        ammoAmount -= 1;
+        CheckTargetHits();
+        WeaponFX();
     }
 
     private void WeaponFX() {
